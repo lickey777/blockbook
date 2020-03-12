@@ -1,0 +1,21 @@
+{
+    "coin_name": "Qtum",
+    "coin_shortcut": "QTUM",
+    "coin_label": "Qtum",
+    "rpc_url": "http://127.0.0.1:13889",
+    "rpc_user": "alex",
+    "rpc_pass": "qtum",
+    "rpc_timeout": 25,
+    "parse": true,
+    "message_queue_binding": "tcp://127.0.0.1:28332",
+    "subversion": "",
+    "address_format": "",
+    "xpub_magic": 76067358,
+    "xpub_magic_segwit_p2sh": 77429938,
+    "xpub_magic_segwit_native": 78792518,
+    "slip44": 2301,
+
+    "mempool_workers": 8,
+    "mempool_sub_workers": 2,
+    "block_addresses_to_keep": 300
+}

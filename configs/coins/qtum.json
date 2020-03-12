@@ -6,15 +6,15 @@
     "alias": "qtum"
   },
   "ports": {
-    "backend_rpc": 8088,
-    "backend_message_queue": 38388,
+    "backend_rpc": 13889,
+    "backend_message_queue": 28332,
     "blockbook_internal": 9088,
     "blockbook_public": 9188
   },
   "ipc": {
     "rpc_url_template": "http://127.0.0.1:{{.Ports.BackendRPC}}",
-    "rpc_user": "rpc",
-    "rpc_pass": "rpc",
+    "rpc_user": "alex",
+    "rpc_pass": "qtum",
     "rpc_timeout": 25,
     "message_queue_binding_template": "tcp://127.0.0.1:{{.Ports.BackendMessageQueue}}"
   },

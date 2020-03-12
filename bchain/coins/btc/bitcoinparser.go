@@ -3,8 +3,10 @@ package btc
 import (
 	"blockbook/bchain"
 	"bytes"
+	"crypto/sha256"
 	"encoding/binary"
 	"encoding/hex"
+	"fmt"
 	"math/big"
 	"strconv"
 
@@ -16,6 +18,7 @@ import (
 	"github.com/martinboehm/btcutil/chaincfg"
 	"github.com/martinboehm/btcutil/hdkeychain"
 	"github.com/martinboehm/btcutil/txscript"
+	"golang.org/x/crypto/ripemd160"
 )
 
 // OutputScriptToAddressesFunc converts ScriptPubKey to bitcoin addresses
@@ -206,6 +209,12 @@ func (p *BitcoinParser) outputScriptToAddresses(script []byte) ([]string, bool, 
 	var s bool
 	if sc == txscript.PubKeyHashTy || sc == txscript.WitnessV0PubKeyHashTy || sc == txscript.ScriptHashTy || sc == txscript.WitnessV0ScriptHashTy {
 		s = true
+	} else if sc == txscript.Call || sc == txscript.Sender {
+		s = true
+		rv = GetCallContractAddress(script)
+	} else if sc == txscript.Create {
+		s = true
+		rv = []string{"create"}
 	} else if len(rv) == 0 {
 		or := p.TryParseOPReturn(script)
 		if or != "" {
@@ -432,4 +441,51 @@ func (p *BitcoinParser) DerivationBasePath(xpub string) (string, error) {
 		bip = "44"
 	}
 	return "m/" + bip + "'/" + strconv.Itoa(int(p.Slip44)) + "'/" + c, nil
+}
+
+// GetCallContractAddress get create contract address
+func GetCallContractAddress(script []byte) []string {
+	hex := hex.EncodeToString(script)
+	return []string{hex[len(hex)-42 : len(hex)-2]}
+}
+
+// GetCreateContractAddress get create contract address
+func GetCreateContractAddress(txid string, v uint) []string {
+	slen := len(txid)
+	klen := len(txid)
+	bHex := make([]byte, klen/2)
+	ii := 0
+	for i := 0; i < klen; i = i + 2 {
+		if slen != 1 {
+			ss := string(txid[i]) + string(txid[i+1])
+			bt, _ := strconv.ParseInt(ss, 16, 32)
+			bHex[ii] = byte(bt)
+			ii = ii + 1
+			slen = slen - 2
+		}
+	}
+	bHex2 := make([]byte, klen/2+4)
+	for j := 0; j < klen/2; j++ {
+		bHex2[j] = bHex[klen/2-j-1]
+	}
+	bHex3 := make([]byte, 4)
+	binary.LittleEndian.PutUint16(bHex3, uint16(v))
+	for k := 0; k < 4; k++ {
+		bHex2[k+klen/2] = bHex3[k]
+	}
+	fmt.Printf("%x \n", bHex3)
+	fmt.Printf("%x \n", bHex2)
+
+	//fmt.Printf("%s \n", hex_string_data)
+	resultAddress := sha256Ripemd160(bHex2)
+	fmt.Printf("%x \n", resultAddress)
+	return []string{hex.EncodeToString(resultAddress)}
+}
+
+func sha256Ripemd160(b []byte) []byte {
+	ripe := ripemd160.New()
+	sha := sha256.New()
+	sha.Write(b)
+	ripe.Write(sha.Sum(nil))
+	return ripe.Sum(nil)
 }

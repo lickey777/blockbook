@@ -2,6 +2,7 @@ package api
 
 import (
 	"blockbook/bchain"
+	"blockbook/bchain/coins/btc"
 	"blockbook/bchain/coins/eth"
 	"blockbook/common"
 	"blockbook/db"
@@ -231,6 +232,11 @@ func (w *Worker) GetTransactionFromBchainTx(bchainTx *bchain.Tx, height int, spe
 		if err != nil {
 			glog.V(2).Infof("getAddressesFromVout error %v, %v, output %v", err, bchainTx.Txid, bchainVout.N)
 		}
+
+		if len(vout.Addresses) > 0 && vout.Addresses[0] == "create" {
+			vout.Addresses = btc.GetCreateContractAddress(bchainTx.Txid, uint(i))
+		}
+
 		if ta != nil {
 			vout.Spent = ta.Outputs[i].Spent
 			if spendingTxs && vout.Spent {
