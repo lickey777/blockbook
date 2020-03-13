@@ -12,11 +12,11 @@ import (
 	"github.com/martinboehm/btcutil/chaincfg"
 )
 
-//// magic numbers
-//const (
-//	MainnetMagic wire.BitcoinNet = 0xf1cfa6d3
-//	TestnetMagic wire.BitcoinNet = 0x0d221506
-//)
+// magic numbers
+const (
+	MainnetMagic wire.BitcoinNet = 0xf9beb4d9
+	TestnetMagic wire.BitcoinNet = 0x0b110907
+)
 
 // chain parameters
 var (
@@ -26,13 +26,13 @@ var (
 
 func init() {
 	MainNetParams = chaincfg.MainNetParams
-	//MainNetParams.Net = MainnetMagic
+	MainNetParams.Net = MainnetMagic
 	//MainNetParams.PubKeyHashAddrID = []byte{58}
 	//MainNetParams.ScriptHashAddrID = []byte{50}
 	//MainNetParams.Bech32HRPSegwit = "qc"
 
 	TestNetParams = chaincfg.TestNet3Params
-	//TestNetParams.Net = TestnetMagic
+	TestNetParams.Net = TestnetMagic
 	//TestNetParams.PubKeyHashAddrID = []byte{120}
 	//TestNetParams.ScriptHashAddrID = []byte{110}
 	//TestNetParams.Bech32HRPSegwit = "tq"
