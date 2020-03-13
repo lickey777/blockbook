@@ -5,6 +5,7 @@ import (
 	"blockbook/bchain/coins/btc"
 	"blockbook/bchain/coins/utils"
 	"bytes"
+	"encoding/binary"
 	"encoding/json"
 	"io"
 
@@ -102,7 +103,16 @@ func parseBlockHeader(r io.Reader) (*wire.BlockHeader, error) {
 }
 
 func (p *BscParser) ParseBlock(b []byte) (*bchain.Block, error) {
+
+	heightByte := make([]byte, 8)
 	r := bytes.NewReader(b)
+
+	r.Read(heightByte)
+	height := binary.BigEndian.Uint32(heightByte)
+	if height < 35000 {
+		return p.BitcoinParser.ParseBlock(b)
+	}
+
 	w := wire.MsgBlock{}
 
 	h, err := parseBlockHeader(r)

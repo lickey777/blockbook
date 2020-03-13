@@ -3,10 +3,13 @@ package bsc
 import (
 	"blockbook/bchain"
 	"blockbook/bchain/coins/btc"
+	"bytes"
+	"encoding/binary"
 	"encoding/json"
 	"math/big"
 
 	"github.com/golang/glog"
+	"github.com/juju/errors"
 )
 
 // BscRPC is an interface to JSON-RPC bitcoind service.
@@ -59,6 +62,47 @@ func (b *BscRPC) Initialize() error {
 	return nil
 }
 
+// GetBlock returns block with given hash.
+func (b *BscRPC) GetBlock(hash string, height uint32) (*bchain.Block, error) {
+	var err error
+	if hash == "" {
+		hash, err = b.GetBlockHash(height)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if !b.ParseBlocks {
+		return b.GetBlockFull(hash)
+	}
+	// optimization
+	if height > 0 {
+		return b.GetBlockWithoutHeader(hash, height)
+	}
+	header, err := b.GetBlockHeader(hash)
+	if err != nil {
+		return nil, err
+	}
+	data, err := b.GetBlockRaw(hash)
+	if err != nil {
+		return nil, err
+	}
+
+	h := make([]byte, 8)
+	binary.BigEndian.PutUint32(h, height)
+	var buffer bytes.Buffer
+	buffer.Write(h)
+	buffer.Write(data)
+
+	block, err := b.Parser.ParseBlock(buffer.Bytes())
+
+	if err != nil {
+		return nil, errors.Annotatef(err, "hash %v", hash)
+	}
+
+	block.BlockHeader = *header
+	return block, nil
+}
+
 // GetTransactionForMempool returns a transaction by the transaction ID
 // It could be optimized for mempool, i.e. without block time and confirmations
 func (b *BscRPC) GetTransactionForMempool(txid string) (*bchain.Tx, error) {
@@ -67,7 +111,7 @@ func (b *BscRPC) GetTransactionForMempool(txid string) (*bchain.Tx, error) {
 
 // EstimateSmartFee returns fee estimation
 func (b *BscRPC) EstimateSmartFee(blocks int, conservative bool) (big.Int, error) {
-	feeRate, err := b.BitcoinRPC.EstimateSmartFee(blocks, conservative)
+	feeRate, err := b.EstimateSmartFee(blocks, conservative)
 	if err != nil {
 		if b.minFeeRate.Cmp(&feeRate) == 1 {
 			feeRate = *b.minFeeRate
