@@ -111,7 +111,6 @@ func (b *BscRPC) GetBlock(hash string, height uint32) (*bchain.Block, error) {
 	binary.BigEndian.PutUint32(h, height)
 
 	block, err := b.Parser.ParseBlock(append(h, data...))
-
 	if err != nil {
 		return nil, errors.Annotatef(err, "hash %v", hash)
 	}
