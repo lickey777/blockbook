@@ -1,4 +1,4 @@
-data*/
+data
 profile/
 blockbook
 notes.txt
@@ -13,3 +13,4 @@ build/*.deb
 .bin-image
 .deb-image
 \.idea/
+.DS_Store
