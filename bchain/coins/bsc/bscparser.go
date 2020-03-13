@@ -110,7 +110,7 @@ func (p *BscParser) ParseBlock(b []byte) (*bchain.Block, error) {
 	r.Read(heightByte)
 	height := binary.BigEndian.Uint32(heightByte)
 	if height < 35000 {
-		return p.BitcoinParser.ParseBlock(b)
+		return p.BitcoinParser.ParseBlock(b[8:])
 	}
 
 	w := wire.MsgBlock{}
