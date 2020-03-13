@@ -30,6 +30,7 @@ import (
 	"blockbook/bchain/coins/pivx"
 	"blockbook/bchain/coins/polis"
 	"blockbook/bchain/coins/qtum"
+	"blockbook/bchain/coins/bsc"
 	"blockbook/bchain/coins/ravencoin"
 	"blockbook/bchain/coins/ritocoin"
 	"blockbook/bchain/coins/unobtanium"
@@ -98,6 +99,8 @@ func init() {
 	BlockChainFactories["Qtum"] = qtum.NewQtumRPC
 	BlockChainFactories["Viacoin"] = viacoin.NewViacoinRPC
 	BlockChainFactories["Qtum Testnet"] = qtum.NewQtumRPC
+	BlockChainFactories["Bsc"] = bsc.NewBscRPC
+	BlockChainFactories["Bsc Testnet"] = bsc.NewBscRPC
 	BlockChainFactories["NULS"] = nuls.NewNulsRPC
 	BlockChainFactories["VIPSTARCOIN"] = vipstarcoin.NewVIPSTARCOINRPC
 	BlockChainFactories["ZelCash"] = zec.NewZCashRPC
