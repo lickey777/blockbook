@@ -3,7 +3,6 @@ package bsc
 import (
 	"blockbook/bchain"
 	"blockbook/bchain/coins/btc"
-	"bytes"
 	"encoding/binary"
 	"encoding/json"
 	"math/big"
@@ -62,6 +61,27 @@ func (b *BscRPC) Initialize() error {
 	return nil
 }
 
+// GetBlockWithoutHeader is an optimization - it does not call GetBlockHeader to get prev, next hashes
+// instead it sets to header only block hash and height passed in parameters
+func (b *BscRPC) GetBlockWithoutHeader(hash string, height uint32) (*bchain.Block, error) {
+	data, err := b.GetBlockRaw(hash)
+	if err != nil {
+		return nil, err
+	}
+
+	h := make([]byte, 8)
+	binary.BigEndian.PutUint32(h, height)
+
+	block, err := b.Parser.ParseBlock(append(h, data...))
+
+	if err != nil {
+		return nil, errors.Annotatef(err, "%v %v", height, hash)
+	}
+	block.BlockHeader.Hash = hash
+	block.BlockHeader.Height = height
+	return block, nil
+}
+
 // GetBlock returns block with given hash.
 func (b *BscRPC) GetBlock(hash string, height uint32) (*bchain.Block, error) {
 	var err error
@@ -89,11 +109,8 @@ func (b *BscRPC) GetBlock(hash string, height uint32) (*bchain.Block, error) {
 
 	h := make([]byte, 8)
 	binary.BigEndian.PutUint32(h, height)
-	var buffer bytes.Buffer
-	buffer.Write(h)
-	buffer.Write(data)
 
-	block, err := b.Parser.ParseBlock(buffer.Bytes())
+	block, err := b.Parser.ParseBlock(append(h, data...))
 
 	if err != nil {
 		return nil, errors.Annotatef(err, "hash %v", hash)

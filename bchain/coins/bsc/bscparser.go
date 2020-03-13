@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"io"
 
+	"github.com/golang/glog"
 	"github.com/martinboehm/btcd/wire"
 	"github.com/martinboehm/btcutil/chaincfg"
 )
@@ -104,15 +105,13 @@ func parseBlockHeader(r io.Reader) (*wire.BlockHeader, error) {
 
 func (p *BscParser) ParseBlock(b []byte) (*bchain.Block, error) {
 
-	heightByte := make([]byte, 8)
-	r := bytes.NewReader(b)
-
-	r.Read(heightByte)
-	height := binary.BigEndian.Uint32(heightByte)
+	height := binary.BigEndian.Uint32(b[:8])
+	glog.Infof("liqi height:%d", height)
 	if height < 35000 {
 		return p.BitcoinParser.ParseBlock(b[8:])
 	}
 
+	r := bytes.NewReader(b[8:])
 	w := wire.MsgBlock{}
 
 	h, err := parseBlockHeader(r)
