@@ -19,6 +19,9 @@ const (
 	TestnetMagic wire.BitcoinNet = 0x0b110907
 )
 
+// 解析区块的临界值
+const parserHeightDiv = 35000
+
 // chain parameters
 var (
 	MainNetParams chaincfg.Params
@@ -102,10 +105,15 @@ func parseBlockHeader(r io.Reader) (*wire.BlockHeader, error) {
 	return h, err
 }
 
+// 通过高度判断是否调用btc ParserBlock
+var is2BtcParseBlock = func(h uint32) bool { return h < parserHeightDiv }
+
 func (p *BscParser) ParseBlock(b []byte) (*bchain.Block, error) {
 
+	/** 备注：这里从data字节流前面，获取8字节的height
+	用于区分高度小于35000是走btc ParseBlock, 否则走bsc的**/
 	height := binary.BigEndian.Uint32(b[:8])
-	if height < 35000 {
+	if is2BtcParseBlock(height) {
 		return p.BitcoinParser.ParseBlock(b[8:])
 	}
 
