@@ -69,6 +69,8 @@ func (b *BscRPC) GetBlockWithoutHeader(hash string, height uint32) (*bchain.Bloc
 		return nil, err
 	}
 
+	/** 备注：这里在data字节流前面，添加8字节的height
+	解析的位置在bscparser.go中 **/
 	h := make([]byte, 8)
 	binary.BigEndian.PutUint32(h, height)
 
