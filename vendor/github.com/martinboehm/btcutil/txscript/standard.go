@@ -167,12 +167,14 @@ func isNullData(pops []parsedOpcode) bool {
 		len(pops[1].data) <= MaxDataCarrierSize
 }
 
-func parseNumberOp(op *opcode) int {
-	if isSmallInt(op) {
-		return asSmallInt(op)
-	} else if op.length > 0 {
+func parseNumberOp(pop parsedOpcode) int {
+	if isSmallInt(pop.opcode) {
+		return asSmallInt(pop.opcode)
+	} else if len(pop.data) > 0 {
 		b := make([]byte, 4)
-		b[0] = op.value
+		for i := 0; i < len(pop.data); i++ {
+			b[i] = pop.data[i]
+		}
 		return int(binary.LittleEndian.Uint16(b))
 	}
 	return 0
@@ -182,7 +184,7 @@ func parseNumberOp(op *opcode) int {
 // false otherwise.
 func isCreateScript(pops []parsedOpcode) bool {
 	return len(pops) == 5 &&
-		parseNumberOp(pops[0].opcode) == 4 &&
+		parseNumberOp(pops[0]) == 4 &&
 		pops[4].opcode.value == OP_CREATE
 }
 
@@ -191,7 +193,7 @@ func isCreateScript(pops []parsedOpcode) bool {
 func isCreateBySenderScript(pops []parsedOpcode) bool {
 	return len(pops) == 9 &&
 		pops[3].opcode.value == OP_SENDER &&
-		parseNumberOp(pops[4].opcode) == 4 &&
+		parseNumberOp(pops[4]) == 4 &&
 		pops[8].opcode.value == OP_CREATE
 }
 
@@ -199,7 +201,7 @@ func isCreateBySenderScript(pops []parsedOpcode) bool {
 // false otherwise.
 func isCallScript(pops []parsedOpcode) bool {
 	return len(pops) == 6 &&
-		parseNumberOp(pops[0].opcode) == 4 &&
+		parseNumberOp(pops[0]) == 4 &&
 		pops[5].opcode.value == OP_CALL
 }
 
@@ -208,7 +210,7 @@ func isCallScript(pops []parsedOpcode) bool {
 func isCallBySenderScript(pops []parsedOpcode) bool {
 	return len(pops) == 10 &&
 		pops[3].opcode.value == OP_SENDER &&
-		parseNumberOp(pops[4].opcode) == 4 &&
+		parseNumberOp(pops[4]) == 4 &&
 		pops[9].opcode.value == OP_CALL
 }
 
@@ -216,7 +218,7 @@ func isCallBySenderScript(pops []parsedOpcode) bool {
 // false otherwise.
 func isContractOutputScript(pops []parsedOpcode) bool {
 	return len(pops) == 6 &&
-		parseNumberOp(pops[0].opcode) == 0 &&
+		parseNumberOp(pops[0]) == 0 &&
 		pops[5].opcode.value == OP_CALL
 }
 
