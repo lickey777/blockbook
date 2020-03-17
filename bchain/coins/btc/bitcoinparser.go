@@ -209,12 +209,12 @@ func (p *BitcoinParser) outputScriptToAddresses(script []byte) ([]string, bool, 
 	var s bool
 	if sc == txscript.PubKeyHashTy || sc == txscript.WitnessV0PubKeyHashTy || sc == txscript.ScriptHashTy || sc == txscript.WitnessV0ScriptHashTy {
 		s = true
-	} else if sc == txscript.Call || sc == txscript.Sender {
-		s = true
-		rv = GetCallContractAddress(script)
 	} else if sc == txscript.Create {
 		s = true
 		rv = []string{"create"}
+	} else if sc == txscript.CreateBySender || sc == txscript.Call || sc == txscript.CallBySender || sc == txscript.ContractOutput {
+		s = true
+		rv = GetCallContractAddress(script)
 	} else if len(rv) == 0 {
 		or := p.TryParseOPReturn(script)
 		if or != "" {

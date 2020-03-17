@@ -5,6 +5,7 @@
 package txscript
 
 import (
+	"encoding/binary"
 	"fmt"
 
 	"github.com/martinboehm/btcd/wire"
@@ -58,9 +59,11 @@ const (
 	WitnessV0ScriptHashTy                    // Pay to witness script hash.
 	MultiSigTy                               // Multi signature.
 	NullDataTy                               // Empty data-only (provably prunable).
-	Call
 	Create
-	Sender
+	CreateBySender
+	Call
+	CallBySender
+	ContractOutput
 )
 
 // scriptClassToName houses the human-readable strings which describe each
@@ -74,9 +77,11 @@ var scriptClassToName = []string{
 	WitnessV0ScriptHashTy: "witness_v0_scripthash",
 	MultiSigTy:            "multisig",
 	NullDataTy:            "nulldata",
-	Call:                  "call",
 	Create:                "create",
-	Sender:                "Sender",
+	CreateBySender:        "create_sender",
+	Call:                  "call",
+	CallBySender:          "call_sender",
+	ContractOutput:        "contract_output",
 }
 
 // String implements the Stringer interface by returning the name of
@@ -162,63 +167,63 @@ func isNullData(pops []parsedOpcode) bool {
 		len(pops[1].data) <= MaxDataCarrierSize
 }
 
+func parseNumberOp(op *opcode) int {
+	if isSmallInt(op) {
+		return asSmallInt(op)
+	} else if op.length > 0 {
+		b := make([]byte, 4)
+		b[0] = op.value
+		return int(binary.LittleEndian.Uint16(b))
+	}
+	return 0
+}
+
+// isCreateScript returns true if the passed script is a create transaction,
+// false otherwise.
+func isCreateScript(pops []parsedOpcode) bool {
+	return len(pops) == 5 &&
+		parseNumberOp(pops[0].opcode) == 4 &&
+		pops[4].opcode.value == OP_CREATE
+}
+
+// isCreateBySenderScript returns true if the passed script is a create transaction,
+// false otherwise.
+func isCreateBySenderScript(pops []parsedOpcode) bool {
+	return len(pops) == 9 &&
+		pops[3].opcode.value == OP_SENDER &&
+		parseNumberOp(pops[4].opcode) == 4 &&
+		pops[8].opcode.value == OP_CREATE
+}
+
 // isCallScript returns true if the passed script is a call transaction,
 // false otherwise.
 func isCallScript(pops []parsedOpcode) bool {
-	return (len(pops) == 6 &&
-		pops[0].opcode.value == OP_DATA_1 &&
-		pops[1].opcode.value == OP_DATA_3 &&
-		pops[2].opcode.value == OP_DATA_1 &&
-		pops[3].opcode.value == OP_DATA_68 &&
-		pops[4].opcode.value == OP_DATA_20 &&
-		pops[5].opcode.value == OP_CALL) || (len(pops) == 6 &&
-		pops[0].opcode.value == OP_DATA_1 &&
-		pops[1].opcode.value == OP_DATA_1 &&
-		pops[2].opcode.value == OP_DATA_1 &&
-		pops[3].opcode.value == OP_DATA_1 &&
-		pops[4].opcode.value == OP_DATA_20 &&
-		pops[5].opcode.value == OP_CALL)
+	return len(pops) == 6 &&
+		parseNumberOp(pops[0].opcode) == 4 &&
+		pops[5].opcode.value == OP_CALL
 }
 
-// isCallScript returns true if the passed script is a create transaction,
+// isCallBySenderScript returns true if the passed script is a call transaction,
 // false otherwise.
-func isCreateScript(pops []parsedOpcode) bool {
-	return (len(pops) == 5 &&
-		pops[0].opcode.value == OP_DATA_1 &&
-		pops[1].opcode.value == OP_DATA_3 &&
-		pops[2].opcode.value == OP_DATA_1 &&
-		pops[3].opcode.value == OP_PUSHDATA2 &&
-		pops[4].opcode.value == OP_CREATE) || (len(pops) == 9 &&
-		pops[0].opcode.value == OP_DATA_1 &&
-		pops[1].opcode.value == OP_DATA_20 &&
-		pops[2].opcode.value == OP_PUSHDATA1 &&
-		pops[3].opcode.value == OP_SENDER &&
-		pops[4].opcode.value == OP_DATA_1 &&
-		pops[5].opcode.value == OP_DATA_3 &&
-		pops[6].opcode.value == OP_DATA_1 &&
-		pops[7].opcode.value == OP_PUSHDATA2 &&
-		pops[8].opcode.value == OP_CREATE)
-}
-
-// isSenderScript returns true if the passed script is a sender transaction,
-// false otherwise.
-func isSenderScript(pops []parsedOpcode) bool {
+func isCallBySenderScript(pops []parsedOpcode) bool {
 	return len(pops) == 10 &&
-		pops[0].opcode.value == OP_DATA_1 &&
-		pops[1].opcode.value == OP_DATA_20 &&
-		pops[2].opcode.value == OP_PUSHDATA1 &&
 		pops[3].opcode.value == OP_SENDER &&
-		pops[4].opcode.value == OP_DATA_1 &&
-		pops[5].opcode.value == OP_DATA_3 &&
-		pops[6].opcode.value == OP_DATA_1 &&
-		pops[7].opcode.value == OP_DATA_68 &&
-		pops[8].opcode.value == OP_DATA_20 &&
+		parseNumberOp(pops[4].opcode) == 4 &&
 		pops[9].opcode.value == OP_CALL
+}
+
+// isContractOutputScript returns true if the passed script is a call transaction,
+// false otherwise.
+func isContractOutputScript(pops []parsedOpcode) bool {
+	return len(pops) == 6 &&
+		parseNumberOp(pops[0].opcode) == 0 &&
+		pops[5].opcode.value == OP_CALL
 }
 
 // scriptType returns the type of the script being inspected from the known
 // standard types.
 func typeOfScript(pops []parsedOpcode) ScriptClass {
+
 	if isPubkey(pops) {
 		return PubKeyTy
 	} else if isPubkeyHash(pops) {
@@ -233,12 +238,16 @@ func typeOfScript(pops []parsedOpcode) ScriptClass {
 		return MultiSigTy
 	} else if isNullData(pops) {
 		return NullDataTy
-	} else if isCallScript(pops) {
-		return Call
 	} else if isCreateScript(pops) {
 		return Create
-	} else if isSenderScript(pops) {
-		return Sender
+	} else if isCreateBySenderScript(pops) {
+		return CreateBySender
+	} else if isCallScript(pops) {
+		return Call
+	} else if isCallBySenderScript(pops) {
+		return CallBySender
+	} else if isContractOutputScript(pops) {
+		return ContractOutput
 	}
 	return NonStandardTy
 }

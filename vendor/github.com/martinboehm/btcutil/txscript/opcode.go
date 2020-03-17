@@ -233,7 +233,7 @@ const (
 	OP_UNKNOWN192          = 0xc0 // 192
 	OP_CREATE              = 0xc1 // 193
 	OP_CALL                = 0xc2 // 194
-	OP_UNKNOWN195          = 0xc3 // 195
+	OP_SPEND               = 0xc3 // 195
 	OP_SENDER              = 0xc4 // 196
 	OP_UNKNOWN197          = 0xc5 // 197
 	OP_UNKNOWN198          = 0xc6 // 198
@@ -519,7 +519,7 @@ var opcodeArray = [256]opcode{
 	OP_UNKNOWN192: {OP_UNKNOWN192, "OP_UNKNOWN192", 1, opcodeInvalid},
 	OP_CREATE:     {OP_CREATE, "OP_CREATE", 1, opcodeInvalid},
 	OP_CALL:       {OP_CALL, "OP_CALL", 1, opcodeInvalid},
-	OP_UNKNOWN195: {OP_UNKNOWN195, "OP_UNKNOWN195", 1, opcodeInvalid},
+	OP_SPEND:      {OP_SPEND, "OP_SPEND", 1, opcodeInvalid},
 	OP_SENDER:     {OP_SENDER, "OP_SENDER", 1, opcodeInvalid},
 	OP_UNKNOWN197: {OP_UNKNOWN197, "OP_UNKNOWN197", 1, opcodeInvalid},
 	OP_UNKNOWN198: {OP_UNKNOWN198, "OP_UNKNOWN198", 1, opcodeInvalid},
