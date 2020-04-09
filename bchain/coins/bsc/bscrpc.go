@@ -131,7 +131,7 @@ func (b *BscRPC) GetTransactionForMempool(txid string) (*bchain.Tx, error) {
 
 // EstimateSmartFee returns fee estimation
 func (b *BscRPC) EstimateSmartFee(blocks int, conservative bool) (big.Int, error) {
-	feeRate, err := b.EstimateSmartFee(blocks, conservative)
+	feeRate, err := b.BitcoinRPC.EstimateSmartFee(blocks, conservative)
 	if err != nil {
 		if b.minFeeRate.Cmp(&feeRate) == 1 {
 			feeRate = *b.minFeeRate
