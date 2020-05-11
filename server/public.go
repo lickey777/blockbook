@@ -1036,6 +1036,16 @@ func (s *PublicServer) apiUtxo(r *http.Request, apiVersion int) (interface{}, er
 		if err == nil && apiVersion == apiV1 {
 			return s.api.AddressUtxoToV1(utxo), nil
 		}
+		
+		for index, v := range utxo {
+			tx, err := s.chain.GetTransaction(v.Txid)
+			if err != nil {
+				break
+			}
+			if int(v.Vout) < len(tx.Vout) {
+				utxo[index].ScriptPubKey = tx.Vout[v.Vout].ScriptPubKey
+			}
+		}
 	}
 	return utxo, err
 }
