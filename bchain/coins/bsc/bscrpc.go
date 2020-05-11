@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"math/big"
 
+	"github.com/martinboehm/btcd/wire"
 	"github.com/golang/glog"
 	"github.com/juju/errors"
 )
@@ -26,7 +27,7 @@ func NewBscRPC(config json.RawMessage, pushHandler func(bchain.NotificationType)
 
 	s := &BscRPC{
 		b.(*btc.BitcoinRPC),
-		big.NewInt(400000),
+		big.NewInt(10000),
 	}
 	s.RPCMarshaler = btc.JSONMarshalerV1{}
 	s.ChainConfig.SupportsEstimateSmartFee = true
@@ -48,7 +49,8 @@ func (b *BscRPC) Initialize() error {
 	b.Parser = NewBscParser(params, b.ChainConfig)
 
 	// parameters for getInfo request
-	if params.Net == MainnetMagic {
+	//if params.Net == MainnetMagic {
+	if params.Net == wire.MainNet{
 		b.Testnet = false
 		b.Network = "livenet"
 	} else {
@@ -136,6 +138,11 @@ func (b *BscRPC) EstimateSmartFee(blocks int, conservative bool) (big.Int, error
 		if b.minFeeRate.Cmp(&feeRate) == 1 {
 			feeRate = *b.minFeeRate
 		}
+	}
+	var key big.Int
+	key.SetInt64(0)
+	if key.Cmp(&feeRate) == 0 {
+		feeRate = *b.minFeeRate
 	}
 	return feeRate, err
 }
