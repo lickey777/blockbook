@@ -782,6 +782,10 @@ func (b *BitcoinRPC) EstimateSmartFee(blocks int, conservative bool) (big.Int, e
 	if res.Error != nil {
 		return r, res.Error
 	}
+	if res.Result.Feerate.String() == "" {
+		r.SetInt64(0)
+		return r, nil
+	}
 	r, err = b.Parser.AmountToBigInt(res.Result.Feerate)
 	if err != nil {
 		return r, err
